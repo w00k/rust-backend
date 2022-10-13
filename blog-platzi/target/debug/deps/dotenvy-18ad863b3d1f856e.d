@@ -1,0 +1,11 @@
+/Users/francisco.arenas/git/rust-backend/blog-platzi/target/debug/deps/dotenvy-18ad863b3d1f856e.rmeta: /Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/lib.rs /Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/errors.rs /Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/find.rs /Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/iter.rs /Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/parse.rs
+
+/Users/francisco.arenas/git/rust-backend/blog-platzi/target/debug/deps/libdotenvy-18ad863b3d1f856e.rlib: /Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/lib.rs /Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/errors.rs /Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/find.rs /Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/iter.rs /Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/parse.rs
+
+/Users/francisco.arenas/git/rust-backend/blog-platzi/target/debug/deps/dotenvy-18ad863b3d1f856e.d: /Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/lib.rs /Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/errors.rs /Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/find.rs /Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/iter.rs /Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/parse.rs
+
+/Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/lib.rs:
+/Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/errors.rs:
+/Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/find.rs:
+/Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/iter.rs:
+/Users/francisco.arenas/.cargo/registry/src/github.com-1ecc6299db9ec823/dotenvy-0.15.5/src/parse.rs:
