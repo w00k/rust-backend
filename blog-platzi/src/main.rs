@@ -145,6 +145,27 @@ fn update_title_slug(conn: &mut PgConnection, input_id: i32, input_title: String
     println!("update --> {:?} \n--------------\n\n", post_update);
 }
 
+// delete_post: elimina post por id
+// @params: conexión y id para el filtro
+// void 
+fn delete_post(conn: &mut PgConnection, input_id: i32) {
+    use self::schema::posts::dsl::*;
+
+    diesel::delete(posts.filter(id.eq(input_id))).execute(conn).expect("Error al eliminar registro");
+}
+
+
+// delete_post_by_slug: elimina post por slug
+// @params: conexión y slug para el filtro
+// void 
+// Nota: a modo de ejemplo borra todo con el filtro "%-post%"
+fn delete_post_by_slug(conn: &mut PgConnection, input_slug: String) {
+    use self::schema::posts::dsl::*;
+
+    // input_slug = "%-post%"
+    diesel::delete(posts.filter(slug.like(input_slug))).execute(conn).expect("Error al eliminar registro");
+}
+
 fn main() {
 
     // obtiene las conexiones 
@@ -155,11 +176,17 @@ fn main() {
 
     // SELECT * FROM posts
     let limit = 1; // limitador de resultados
-    let id: i32 = 2;
+    let id: i32 = 7;
     let title: String = String::from("Mi segundo blogpost");
     let slug: String = String::from("segundo-post");
+    let delete_slug: String = String::from("%-post%");
     
-    println!("limit: {} \nid: {}\n title: {}\nslug:{} \n--------------\n\n", limit, id, title, slug);
+    println!("limit: {} \nid: {}\n title: {}\nslug:{}\ndelete_slug {}  
+    \n--------------\n\n", limit, id, title, slug, delete_slug);
+
+    // DELETE TABLE posts WHERE id = ?
+    // delete_post(conn, id);
+    // delete_post_by_slug(conn, delete_slug);
 
     // UPDATE TABLE posts SET slug = '?' WHERE id = ?
     // update_slug(conn, id, slug);
