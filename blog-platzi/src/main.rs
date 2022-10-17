@@ -35,14 +35,14 @@ pub fn establish_connection() -> PgConnection {
 // add_new_post: agrega datos a la tabla posts
 // @param: conexión a la base de datos
 // void 
-fn add_new_post(conn: &mut PgConnection) {
+fn add_new_post(conn: &mut PgConnection, input_title: String, input_slug:String) {
     use self::models::{Post, NewPost};
     use self::schema::posts::dsl::*;
 
     let new_post = NewPost { 
-        title: "Mi septimo blogpost", 
+        title: &input_title, 
         body: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum. ", 
-        slug: "septimo-post",
+        slug: &input_slug,
     };
 
     diesel::insert_into(posts).values(&new_post).get_result::<Post>(conn).expect("Error en insertar dato");
@@ -172,7 +172,7 @@ fn main() {
     let conn  = &mut establish_connection();
 
     // función que permite agregar datos a la base de datos
-    // add_new_post(conn);
+    // add_new_post(conn, String::from("Septimo Post"), String::from("septimo-post"));
 
     // SELECT * FROM posts
     let limit = 1; // limitador de resultados
