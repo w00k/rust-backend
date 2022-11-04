@@ -10,23 +10,26 @@ use dotenvy::dotenv;
 use std::env;
 //use std::fmt::format;
 
-//use crate::models::PostSimple;
+// tera framework
+use tera::Tera;
 
 // pool de conexiones a la base de datos
 //use diesel::r2d2::{self, ConnectionManager, PooledConnection};
-use diesel::r2d2::{self, ConnectionManager};
 use diesel::r2d2::Pool;
+use diesel::r2d2::{self, ConnectionManager};
 
 // actix framework para lo que es servicios web
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, http::header::ContentType};
+use actix_web::{
+    get, http::header::ContentType, post, web, App, HttpResponse, HttpServer, Responder,
+};
 
 pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
-// Importamos esquemas de BBDD y modelo 
+// Importamos esquemas de BBDD y modelo
 pub mod models;
 pub mod schema;
 
-use self::models::{Post, NewPostHandler};
+use self::models::{NewPostHandler, Post};
 use self::schema::posts::dsl::*;
 
 ////////////////// fin imports /////////////////
@@ -34,11 +37,13 @@ use self::schema::posts::dsl::*;
 // establish_connection: lee la variable en .env file y crea la conexión a la base de datos
 // @param: none
 // return Pool<ConnectionManager<PgConnection>>
-pub fn establish_connection() -> Pool<ConnectionManager<PgConnection>>{
+pub fn establish_connection() -> Pool<ConnectionManager<PgConnection>> {
     dotenv().ok();
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let connection = ConnectionManager::<PgConnection>::new(database_url);
-    let pool = Pool::builder().build(connection).expect("No se puedo construir el pool de conexiones");
+    let pool = Pool::builder()
+        .build(connection)
+        .expect("No se puedo construir el pool de conexiones");
     return pool;
 }
 
@@ -52,30 +57,40 @@ async fn index(pool: web::Data<DbPool>) -> impl Responder {
     let mut conn = pool.get().expect("Problemas al traer la base de datos");
 
     // en el treads qn que estamos lo bloquea para no generar condición de carrera
-    return match web::block(move || {posts.load::<Post>(&mut conn)}).await {
-        Ok(app_data) => { 
-           HttpResponse::Ok().content_type(ContentType::json()).body(format!("{:?}", app_data))
-        },
-        Err(_err) => HttpResponse::Ok().content_type(ContentType::json()).body("Error al recibir la data")
+    return match web::block(move || posts.load::<Post>(&mut conn)).await {
+        Ok(app_data) => HttpResponse::Ok()
+            .content_type(ContentType::json())
+            .body(format!("{:?}", app_data)),
+        Err(_err) => HttpResponse::Ok()
+            .content_type(ContentType::json())
+            .body("Error al recibir la data"),
     };
 }
-
 
 #[post("/new_post")]
 async fn new_post(pool: web::Data<DbPool>, item: web::Json<NewPostHandler>) -> impl Responder {
     let mut conn = pool.get().expect("Problemas al traer la base de datos");
-    
-    return match web::block(move || {Post::create_post(&mut conn, &item)}).await {
-        Ok(app_data) => { 
-            HttpResponse::Ok().content_type(ContentType::json()).body(format!("{:?}", app_data))
-        },
-        Err(_err) => HttpResponse::Ok().content_type(ContentType::json()).body("Error al recibir la data")
+
+    return match web::block(move || Post::create_post(&mut conn, &item)).await {
+        Ok(app_data) => HttpResponse::Ok()
+            .content_type(ContentType::json())
+            .body(format!("{:?}", app_data)),
+        Err(_err) => HttpResponse::Ok()
+            .content_type(ContentType::json())
+            .body("Error al recibir la data"),
     };
+}
+
+#[get("/index_tera")]
+async fn index_tera(template_manager: web::Data<tera::Tera>) -> impl Responder {
+    let mut ctx = tera::Context::new();
+    HttpResponse::Ok().content_type(ContentType::html()).body(
+        template_manager.render("index_tera.html", &ctx).unwrap()
+    )
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-
     // dotenv().ok();
     // let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     // let connection = ConnectionManager::<PgConnection>::new(database_url);
@@ -85,9 +100,16 @@ async fn main() -> std::io::Result<()> {
 
     // move indicamos que el ownership a donde lo vamos a necesitar, en este caso es el pool de conexiones
     HttpServer::new(move || {
+        let tera = Tera::new(concat!(env!("CARGO_MANIFEST_DIR"), "/templates/**/*.html")).unwrap();
+
         App::new()
-        .service(index)
-        .service(new_post)
-        .app_data(web::Data::new(pool.clone()))
-    }).bind(("localhost", 9900))?.run().await
+            .service(index)
+            .service(new_post)
+            .service(index_tera)
+            .app_data(web::Data::new(pool.clone()))
+            .app_data(web::Data::new(tera.clone()))
+    })
+    .bind(("localhost", 9900))?
+    .run()
+    .await
 }
