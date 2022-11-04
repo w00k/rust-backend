@@ -1,5 +1,3 @@
-// Indicamos que vamos a utilizar macros
-#[macro_use]
 // Importamos Diesel
 extern crate diesel;
 
@@ -10,21 +8,26 @@ use diesel::prelude::*;
 // Importamos librerias para leer variables de entorno
 use dotenvy::dotenv;
 use std::env;
+//use std::fmt::format;
 
-use crate::models::PostSimple;
+//use crate::models::PostSimple;
 
 // pool de conexiones a la base de datos
-use diesel::r2d2::{self, ConnectionManager, PooledConnection};
+//use diesel::r2d2::{self, ConnectionManager, PooledConnection};
+use diesel::r2d2::{self, ConnectionManager};
 use diesel::r2d2::Pool;
 
 // actix framework para lo que es servicios web
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, http::header::ContentType};
 
 pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
 // Importamos esquemas de BBDD y modelo 
 pub mod models;
 pub mod schema;
+
+use self::models::{Post, NewPostHandler};
+use self::schema::posts::dsl::*;
 
 ////////////////// fin imports /////////////////
 
@@ -46,15 +49,27 @@ pub fn establish_connection() -> Pool<ConnectionManager<PgConnection>>{
 // HttpResponse::Ok().body("Hello world")
 #[get("/")]
 async fn index(pool: web::Data<DbPool>) -> impl Responder {
-    use self::models::Post;
-    use self::schema::posts::dsl::*;
-
     let mut conn = pool.get().expect("Problemas al traer la base de datos");
 
     // en el treads qn que estamos lo bloquea para no generar condición de carrera
     return match web::block(move || {posts.load::<Post>(&mut conn)}).await {
-        Ok(app_data) => HttpResponse::Ok().body("Hemos encontrado algo"),
-        Err(err) => HttpResponse::Ok().body("Error al recibir la data")
+        Ok(app_data) => { 
+           HttpResponse::Ok().content_type(ContentType::json()).body(format!("{:?}", app_data))
+        },
+        Err(_err) => HttpResponse::Ok().content_type(ContentType::json()).body("Error al recibir la data")
+    };
+}
+
+
+#[post("/new_post")]
+async fn new_post(pool: web::Data<DbPool>, item: web::Json<NewPostHandler>) -> impl Responder {
+    let mut conn = pool.get().expect("Problemas al traer la base de datos");
+    
+    return match web::block(move || {Post::create_post(&mut conn, &item)}).await {
+        Ok(app_data) => { 
+            HttpResponse::Ok().content_type(ContentType::json()).body(format!("{:?}", app_data))
+        },
+        Err(_err) => HttpResponse::Ok().content_type(ContentType::json()).body("Error al recibir la data")
     };
 }
 
@@ -69,8 +84,10 @@ async fn main() -> std::io::Result<()> {
     let pool = establish_connection();
 
     // move indicamos que el ownership a donde lo vamos a necesitar, en este caso es el pool de conexiones
-    HttpServer::new(move || App::new().service(index).app_data(web::Data::new(pool.clone())))
-        .bind(("localhost", 9900))?
-        .run()
-        .await
+    HttpServer::new(move || {
+        App::new()
+        .service(index)
+        .service(new_post)
+        .app_data(web::Data::new(pool.clone()))
+    }).bind(("localhost", 9900))?.run().await
 }
