@@ -53,14 +53,25 @@ pub fn establish_connection() -> Pool<ConnectionManager<PgConnection>> {
 // ó
 // HttpResponse::Ok().body("Hello world")
 #[get("/")]
-async fn index(pool: web::Data<DbPool>) -> impl Responder {
+async fn index(pool: web::Data<DbPool>, template_manager: web::Data<tera::Tera>) -> impl Responder {
     let mut conn = pool.get().expect("Problemas al traer la base de datos");
 
     // en el treads qn que estamos lo bloquea para no generar condición de carrera
     return match web::block(move || posts.load::<Post>(&mut conn)).await {
-        Ok(app_data) => HttpResponse::Ok()
-            .content_type(ContentType::json())
-            .body(format!("{:?}", app_data)),
+        Ok(app_data) => {
+            let mut ctx = tera::Context::new();
+            let data = app_data.unwrap();
+            ctx.insert("posts", &data);
+
+            HttpResponse::Ok()
+            .content_type(ContentType::html())
+            .body(template_manager.render("index_tera.html", &ctx).unwrap())
+
+
+            // HttpResponse::Ok()
+            //    .content_type(ContentType::json())
+            //    .body(format!("{:?}", app_data))
+        }
         Err(_err) => HttpResponse::Ok()
             .content_type(ContentType::json())
             .body("Error al recibir la data"),
@@ -81,14 +92,6 @@ async fn new_post(pool: web::Data<DbPool>, item: web::Json<NewPostHandler>) -> i
     };
 }
 
-#[get("/index_tera")]
-async fn index_tera(template_manager: web::Data<tera::Tera>) -> impl Responder {
-    let mut ctx = tera::Context::new();
-    HttpResponse::Ok().content_type(ContentType::html()).body(
-        template_manager.render("index_tera.html", &ctx).unwrap()
-    )
-}
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // dotenv().ok();
@@ -96,6 +99,7 @@ async fn main() -> std::io::Result<()> {
     // let connection = ConnectionManager::<PgConnection>::new(database_url);
     // let pool = Pool::builder().build(connection).expect("No se puedo construir el pool de conexiones");
 
+    println!("server init"); 
     let pool = establish_connection();
 
     // move indicamos que el ownership a donde lo vamos a necesitar, en este caso es el pool de conexiones
@@ -105,11 +109,10 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .service(index)
             .service(new_post)
-            .service(index_tera)
             .app_data(web::Data::new(pool.clone()))
             .app_data(web::Data::new(tera.clone()))
     })
-    .bind(("localhost", 9900))?
+    .bind(("0.0.0.0", 9900))?
     .run()
     .await
 }
